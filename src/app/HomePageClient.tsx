@@ -210,7 +210,7 @@ export default function HomePageClient({ publicKey }: HomePageClientProps) {
               <Card.Body>
                 {publicKey ? (
                   <>
-                    <p>The app is serving this public key at `/.well-known/...`</p>
+                    <p>The app is serving this public key at <a href="/.well-known/appspecific/com.tesla.3p.public-key.pem">/.well-known/appspecific/com.tesla.3p.public-key.pem</a></p>
                     <pre className="bg-light p-3 rounded">{publicKey.replace(/\n/g, '\n')}</pre>
                   </>
                 ) : (
