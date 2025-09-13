@@ -1,0 +1,178 @@
+name: Create and Publish Docker Image
+
+on:
+  # Run on pushes to main and on new releases
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  release:
+    types: [published]
+
+jobs:
+  build-and-push-amd64:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Needed to push to GHCR
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      - name: Build and push Docker image (amd64)
+        id: build-amd64
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/${{ github.repository }}:amd64-${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Export digest (amd64)
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          echo "${{ steps.build-amd64.outputs.digest }}" > ${{ runner.temp }}/digests/amd64.txt
+
+      - name: Upload digest artifact (amd64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-amd64
+          path: ${{ runner.temp }}/digests/amd64.txt
+
+  build-and-push-arm64:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Needed to push to GHCR
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      - name: Build and push Docker image (arm64)
+        id: build-arm64
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/arm64
+          push: true
+          tags: ghcr.io/${{ github.repository }}:arm64-${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Export digest (arm64)
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          echo "${{ steps.build-arm64.outputs.digest }}" > ${{ runner.temp }}/digests/arm64.txt
+
+      - name: Upload digest artifact (arm64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-arm64
+          path: ${{ runner.temp }}/digests/arm64.txt
+
+  create-manifest-list:
+    runs-on: ubuntu-latest
+    needs: [build-and-push-amd64, build-and-push-arm64]
+    permissions:
+      contents: read
+      packages: write # Needed to push to GHCR
+
+    steps:
+      - name: Download Digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      - name: Create manifest list and push
+        run: |
+          export AMD64_DIGEST=$(cat ${{ runner.temp }}/digests/amd64.txt)
+          export ARM64_DIGEST=$(cat ${{ runner.temp }}/digests/arm64.txt)
+          
+          echo "${{ steps.meta.outputs.tags }}" | xargs -I {} docker buildx imagetools create \
+            --tag {} \
+            ghcr.io/${{ github.repository }}@$AMD64_DIGEST \
+            ghcr.io/${{ github.repository }}@$ARM64_DIGEST
+
+      - name: Inspect Image
+        run: |
+          echo "${{ steps.meta.outputs.tags }}" | head -n1 | xargs -I {} docker buildx imagetools inspect {}
