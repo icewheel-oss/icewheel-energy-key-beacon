@@ -148,7 +148,7 @@ The application's UI provides two `curl` commands to generate these tokens. You 
 **North America Token:**
 ```bash
 curl --request POST \
-  --url 'https://fleet-auth.prd.na.vn.cloud.tesla.com/oauth2/v3/token' \
+  --url 'https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/token' \
   --header 'Content-Type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=client_credentials' \
   --data-urlencode 'client_id=YOUR_CLIENT_ID' \
@@ -160,7 +160,7 @@ curl --request POST \
 **Europe Token:**
 ```bash
 curl --request POST \
-  --url 'https://fleet-auth.prd.eu.vn.cloud.tesla.com/oauth2/v3/token' \
+  --url 'https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3/token' \
   --header 'Content-Type: application/x-www-form-urlencoded' \
   --data-urlencode 'grant_type=client_credentials' \
   --data-urlencode 'client_id=YOUR_CLIENT_ID' \
