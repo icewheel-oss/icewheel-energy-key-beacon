@@ -21,9 +21,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  env: {
-    TESLA_PUBLIC_KEY: process.env.TESLA_PUBLIC_KEY,
-  },
   /* config options here */
 };
 

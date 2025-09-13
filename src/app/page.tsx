@@ -19,6 +19,9 @@
 
 import HomePageClient from './HomePageClient';
 
+// Ensure this page is rendered at request time so runtime env vars are visible in production
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   const publicKey = process.env.TESLA_PUBLIC_KEY;
 
