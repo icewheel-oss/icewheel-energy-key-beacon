@@ -1,5 +1,11 @@
 # Icewheel Energy Key Beacon
 
+**Important Notice:** For a more streamlined and up-to-date experience, we highly recommend using the Cloud Run function-based alternative available at [https://github.com/icewheel-oss/icewheel-energy-key-beacon-function](https://github.com/icewheel-oss/icewheel-energy-key-beacon-function). This alternative is significantly easier to deploy and includes the latest functionality.
+
+---
+
+# Icewheel Energy Key Beacon
+
 **Live Demo:** [https://key-beacon.icewheel.dev/](https://key-beacon.icewheel.dev/)
 
 *Note: This is a development environment and may be down due to ongoing development activities. Please try again later if it's unavailable.*
